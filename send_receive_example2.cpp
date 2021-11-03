@@ -17,6 +17,16 @@ main (int argc, char *argv[])
 		printf(" I am rank %d of %d total ranks, am sending %d to all the other ranks. \n", rank, size, send_number);
 		for (int i=1; i<size; i++)
 			MPI_Send(&send_number, 1, MPI_INT, i, 0, MPI_COMM_WORLD);
+		
+		int return_values[size];
+		MPI_Status status;
+		
+		return_values[0] = 0; // no senders at this index
+		for (int i=1; i<size; i++)
+		{
+			MPI_Recv(&(return_values[i]), 1, MPI_INT, i, 0, MPI_COMM_WORLD, &status);
+			printf(" Primary rank received %d from rank %d \n", return_values[i], i);
+		}
 	}
 	else
 	{
@@ -24,6 +34,10 @@ main (int argc, char *argv[])
 		MPI_Status status;
 		MPI_Recv(&recv_number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &status);
 		printf(" I am rank %d of %d total ranks, and I received %d from rank zero \n", rank, size, recv_number);
+		
+		// now, add rank to the recv_number and send it back to the primary
+		recv_number += rank;
+		MPI_Send(&recv_number, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);
 	}
 	
 	MPI_Finalize();
